@@ -1,30 +1,38 @@
+﻿import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { rooms } from "@/db/schema";
+import { rooms, participants, utterances, feedbackReports } from "@/db/schema";
+
+export type Participant = typeof participants.$inferSelect;
+export type Utterance = typeof utterances.$inferSelect;
 
 export async function getRoom(id: string) {
-  return db.query.rooms.findFirst({
-    where: (_rooms, { eq }) => eq(_rooms.id, id),
-  });
+  const [row] = await db.select().from(rooms).where(eq(rooms.id, id)).limit(1);
+  return row;
 }
 
-export async function getParticipants(roomId: string) {
-  const rows = await db.query.participants.findMany({
-    where: (_participants, { eq }) => eq(_participants.roomId, roomId),
-  });
-  return rows.sort((a, b) => a.seatIndex - b.seatIndex);
+export async function getParticipants(roomId: string): Promise<Participant[]> {
+  return db
+    .select()
+    .from(participants)
+    .where(eq(participants.roomId, roomId))
+    .orderBy(asc(participants.seatIndex));
 }
 
-export async function getUtterances(roomId: string) {
-  const rows = await db.query.utterances.findMany({
-    where: (_utterances, { eq }) => eq(_utterances.roomId, roomId),
-  });
-  return rows.sort((a, b) => a.startedAtMs - b.startedAtMs);
+export async function getUtterances(roomId: string): Promise<Utterance[]> {
+  return db
+    .select()
+    .from(utterances)
+    .where(eq(utterances.roomId, roomId))
+    .orderBy(asc(utterances.startedAtMs));
 }
 
 export async function getReport(roomId: string) {
-  return db.query.feedbackReports.findFirst({
-    where: (_feedbackReports, { eq }) => eq(_feedbackReports.roomId, roomId),
-  });
+  const [row] = await db
+    .select()
+    .from(feedbackReports)
+    .where(eq(feedbackReports.roomId, roomId))
+    .limit(1);
+  return row;
 }
 
 /** Checks whether the free-discussion timer has lapsed while the floor is

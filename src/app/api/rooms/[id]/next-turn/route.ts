@@ -1,3 +1,4 @@
+type Utterance = { renderedText: string; speakerName: string };
 import { db } from "@/db";
 import { rooms } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
@@ -19,7 +20,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 async function recentTranscript(roomId: string): Promise<TranscriptLine[]> {
-  const rows = await getUtterances(roomId);
+  const rows: Utterance[] = await getUtterances(roomId);
   return rows
     .filter((r) => !r.renderedText.startsWith("(no "))
     .slice(-10)
